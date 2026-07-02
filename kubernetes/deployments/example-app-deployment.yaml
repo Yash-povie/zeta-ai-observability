@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-app
+  namespace: zeta-ai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: example-app
+  template:
+    metadata:
+      labels:
+        app: example-app
+    spec:
+      containers:
+        - name: example-app
+          image: zeta-example-app:latest
+          ports:
+            - containerPort: 8001
+          envFrom:
+            - configMapRef:
+                name: zeta-config
+            - secretRef:
+                name: zeta-secrets
+          livenessProbe:
+            httpGet:
+              path: /run_agent
+              port: 8001
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"

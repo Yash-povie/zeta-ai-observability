@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+dist/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.pyc
+
+# Env
+.env
+*.env.local
+
+# Node
+node_modules/
+.next/
+out/
+
+# Docker volumes / build artifacts
+*.log
+*.pid
+
+# Alembic
+alembic/versions/__pycache__/
+
+# IDE
+.vscode/
+.idea/
+*.swp

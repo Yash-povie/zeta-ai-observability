@@ -1,0 +1,69 @@
+{
+  "title": "LLM Control Plane",
+  "timezone": "browser",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Total Daily Spend",
+      "gridPos": {"x": 0, "y": 0, "w": 8, "h": 8},
+      "targets": [
+        {
+          "expr": "sum(increase(llm_cost_usd_total[24h]))",
+          "legendFormat": "Total Spend ($)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Cost by Agent Node",
+      "gridPos": {"x": 8, "y": 0, "w": 8, "h": 8},
+      "targets": [
+        {
+          "expr": "sum(rate(llm_cost_usd_total[1h])) by (agent_node)",
+          "legendFormat": "{{agent_node}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Token Velocity",
+      "gridPos": {"x": 16, "y": 0, "w": 8, "h": 8},
+      "targets": [
+        {
+          "expr": "sum(rate(llm_tokens_total[5m])) by (token_type)",
+          "legendFormat": "{{token_type}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency p95 by Model",
+      "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(llm_inference_duration_seconds_bucket[5m])) by (le, llm_model))",
+          "legendFormat": "{{llm_model}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Average Hallucination Rate",
+      "datasource": "PostgreSQL",
+      "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+      "targets": [
+        {
+          "format": "time_series",
+          "rawSql": "SELECT created_at AS \"time\", hallucination_score FROM llm_evaluations ORDER BY 1",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "version": 1
+}

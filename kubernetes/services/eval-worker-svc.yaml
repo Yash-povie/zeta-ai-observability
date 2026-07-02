@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: eval-worker
+  namespace: zeta-ai
+spec:
+  selector:
+    app: eval-worker
+  ports:
+    - name: http
+      port: 8002
+      targetPort: 8002

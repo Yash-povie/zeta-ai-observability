@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eval-worker
+  namespace: zeta-ai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eval-worker
+  template:
+    metadata:
+      labels:
+        app: eval-worker
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8002"
+    spec:
+      containers:
+        - name: eval-worker
+          image: zeta-eval-worker:latest
+          ports:
+            - containerPort: 8002
+          envFrom:
+            - configMapRef:
+                name: zeta-config
+            - secretRef:
+                name: zeta-secrets
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8002
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"

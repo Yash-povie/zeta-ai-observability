@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: zeta_telemetry
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio ruff httpx
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Run tests
+        env:
+          DATABASE_URL: postgresql://admin:password@localhost:5432/zeta_telemetry
+          JAEGER_API_URL: http://localhost:16686/api/traces
+        run: |
+          python -m pytest tests/ -v --tb=short
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build dummy_app image
+        run: docker build -f example_app/Dockerfile -t zeta-example-app:${{ github.sha }} .
+
+      - name: Build eval_worker image
+        run: docker build -f eval_worker/Dockerfile -t zeta-eval-worker:${{ github.sha }} .
