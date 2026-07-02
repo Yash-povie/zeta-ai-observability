@@ -1,7 +1,7 @@
 """create llm_evaluations table
 
 Revision ID: 001
-Revises: 
+Revises:
 Create Date: 2025-01-01 00:00:00
 """
 from typing import Sequence, Union
