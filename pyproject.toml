@@ -1,0 +1,15 @@
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = [
+    "E501",   # line too long — handled by formatter
+    "E402",   # module-level import not at top — needed for path manipulation before imports
+    "F401",   # imported but unused — too noisy in __init__ re-exports and test helpers
+]
+per-file-ignores = { "tests/**" = ["F811", "F841"], "alembic/**" = ["F401", "E402"] }
+
+[tool.ruff.lint.isort]
+known-first-party = ["eval_worker", "shared_observability", "example_app"]
