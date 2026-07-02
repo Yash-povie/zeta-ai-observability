@@ -4,8 +4,6 @@ from typing import Any, Callable, Dict, Optional
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 
-tracer = trace.get_tracer(__name__)
-
 def trace_llm_call(
     provider: str,
     model: str,
@@ -25,6 +23,8 @@ def trace_llm_call(
     def decorator(func: Callable):
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
+            # Get tracer from current provider (allows tests to inject their own)
+            tracer = trace.get_tracer(__name__)
             with tracer.start_as_current_span(f"{provider}.{model}") as span:
                 span.set_attribute("llm.provider", provider)
                 span.set_attribute("llm.model", model)
@@ -55,6 +55,8 @@ def trace_llm_call(
 
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
+            # Get tracer from current provider (allows tests to inject their own)
+            tracer = trace.get_tracer(__name__)
             with tracer.start_as_current_span(f"{provider}.{model}") as span:
                 span.set_attribute("llm.provider", provider)
                 span.set_attribute("llm.model", model)
