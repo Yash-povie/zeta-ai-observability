@@ -19,7 +19,7 @@ from shared_observability.middleware import FastAPITelemetryMiddleware
 resource = Resource(attributes={"service.name": "example_app"})
 provider = TracerProvider(resource=resource)
 # Note: we send to the collector on port 4317
-processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="http://localhost:4317", insecure=True))
+processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="http://otel-collector:4317", insecure=True))
 provider.add_span_processor(processor)
 trace.set_tracer_provider(provider)
 
@@ -63,4 +63,4 @@ FastAPIInstrumentor.instrument_app(app)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8001)

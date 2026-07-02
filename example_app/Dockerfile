@@ -2,11 +2,11 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY example_app/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
-COPY ../shared_observability /app/shared_observability
+COPY example_app ./example_app
+COPY shared_observability ./shared_observability
 
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8001
