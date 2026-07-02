@@ -1,6 +1,5 @@
 import asyncio
 import pytest
-from unittest.mock import patch, MagicMock
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
@@ -11,20 +10,22 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from shared_observability.instrumentation import trace_llm_call
 
+_exporter = InMemorySpanExporter()
+
+def pytest_configure(config):
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(_exporter))
+    trace.set_tracer_provider(provider)
+
 
 @pytest.fixture(autouse=True)
-def setup_tracer():
-    exporter = InMemorySpanExporter()
-    provider = TracerProvider()
-    provider.add_span_processor(SimpleSpanProcessor(exporter))
-    trace.set_tracer_provider(provider)
-    yield exporter
-    exporter.clear()
+def clear_spans():
+    _exporter.clear()
+    yield
+    _exporter.clear()
 
 
-def test_trace_llm_call_sets_attributes(setup_tracer):
-    exporter = setup_tracer
-
+def test_trace_llm_call_sets_attributes():
     def extract_tokens(resp, kwargs):
         return {"prompt": 100, "completion": 50}
 
@@ -41,9 +42,9 @@ def test_trace_llm_call_sets_attributes(setup_tracer):
     async def fake_llm(prompt: str):
         return "response"
 
-    asyncio.get_event_loop().run_until_complete(fake_llm("hello"))
+    asyncio.run(fake_llm("hello"))
 
-    spans = exporter.get_finished_spans()
+    spans = _exporter.get_finished_spans()
     assert len(spans) == 1
     attrs = spans[0].attributes
     assert attrs["llm.provider"] == "anthropic"
@@ -55,16 +56,14 @@ def test_trace_llm_call_sets_attributes(setup_tracer):
     assert attrs["error"] is False
 
 
-def test_trace_llm_call_records_errors(setup_tracer):
-    exporter = setup_tracer
-
+def test_trace_llm_call_records_errors():
     @trace_llm_call(provider="openai", model="gpt-4", agent_node="ERROR_NODE")
     async def failing_llm(prompt: str):
         raise ValueError("LLM failed")
 
     with pytest.raises(ValueError):
-        asyncio.get_event_loop().run_until_complete(failing_llm("hello"))
+        asyncio.run(failing_llm("hello"))
 
-    spans = exporter.get_finished_spans()
+    spans = _exporter.get_finished_spans()
     assert len(spans) == 1
     assert spans[0].attributes["error"] is True
